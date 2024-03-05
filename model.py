@@ -7,17 +7,20 @@ import torch.optim as optim
 from collections import namedtuple
 import random
 
+torch.set_default_device('cuda')
+
 class DQN(nn.Module):
   def __init__(self, input_size, hidden_size, output_size):
     super(DQN, self).__init__()
     self.input_size = input_size
     # Replace F.linear with nn.Linear and adjust input size for flattened state
+
     self.fc1 = nn.Linear(786432, hidden_size)
     self.fc2 = nn.Linear(hidden_size, output_size)
 
   def forward(self, x, output_size=None):
         x = torch.flatten(x)
-        x = F.relu(self.fc1(x))
+        x = nn.GELU()(self.fc1(x))
         
         # If output_size is provided, adjust the output layer dynamically
         if output_size:
@@ -32,8 +35,8 @@ class Agent:
     self.gamma = gamma
     self.state_size = self.env.observation_space.shape
     self.action_size = self.env.action_space.n
-    self.policy_net = DQN(self.state_size, 128, self.action_size)
-    self.target_net = DQN(self.state_size, 128, self.action_size)
+    self.policy_net = DQN(self.state_size, 32, self.action_size)
+    self.target_net = DQN(self.state_size, 32, self.action_size)
     self.optimizer = optim.Adam(self.policy_net.parameters(), lr=self.lr)
     self.update_target_every = 10
 
@@ -61,7 +64,7 @@ class Agent:
       q_target += self.gamma * torch.max(next_q_values)
 
     expected_q = q_values[action]
-    loss = F.mse_loss(expected_q, q_target)
+    loss = F.mse_loss(expected_q, torch.tensor(q_target, dtype=torch.float))
 
     self.optimizer.zero_grad()
     loss.backward()
@@ -83,8 +86,8 @@ episodes = 1000
 for episode in range(episodes):
   state = env.reset()
   done = False
+  total_reward = 0
   while not done:
-    env.render()
     legal_moves = list(env.action_space.board.legal_moves)
     agent.update_action_size(len(legal_moves))
     action = agent.choose_action(state)
@@ -92,10 +95,11 @@ for episode in range(episodes):
        print('No legal moves')
        break
     next_state, reward, done, info = env.step(legal_moves[action])
+    total_reward += reward
     agent.learn(state, action, reward, next_state, done)
     state = next_state
 
   # Update exploration rate
-  print('Episode: ', episode+1)
+  print('Episode', episode+1, 'Reward for both sides', total_reward)
 
 env.close()
