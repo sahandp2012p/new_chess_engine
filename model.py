@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from collections import namedtuple
 import random
-
+#Test Dan
 torch.set_default_device('cuda')
 
 class DQN(nn.Module):
