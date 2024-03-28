@@ -16,7 +16,7 @@ class ChessEnv(ChessEnv):
         self.reward_lookup = {
             'check': 0.05,
             'mate': 100.0,
-            'stalemate': 0.0,
+            'stalemate': -10,
             'p': 1,
             'n': 3,
             'b': 3,
@@ -25,7 +25,7 @@ class ChessEnv(ChessEnv):
             '2': 3,  # Promotion to knight
             '3': 3,  # Promotion to bishop
             '4': 5,  # Promotion to rook
-            '5': 9   # Promotion to queen
+            '5': 9   # Promotion to queen,
         }
 
         self.action_space = MoveSpace(self.board)
