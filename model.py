@@ -14,19 +14,18 @@ class DQN(nn.Module):
     self.input_size = input_size
     # Replace F.linear with nn.Linear and adjust input size for flattened state
 
-    self.fc1 = nn.Linear(786432, hidden_size)
-    self.fc2 = nn.Linear(hidden_size, output_size)
+    self.fc1 = nn.Linear(input_size, hidden_size)
+    self.output_size = output_size
 
   def forward(self, x, output_size=None):
         x = torch.flatten(x)
-        x = nn.GELU()(self.fc1(x))
+        x = self.fc1(x)
         
         # If output_size is provided, adjust the output layer dynamically
         if output_size:
-            self.fc2 = nn.Linear(self.fc1.out_features, output_size)
+            self.fc2 = nn.Linear(self.fc1.out_features, self.output_size)
         
-        x = self.fc2(x)
-        return x
+        return self.fc2(x)
 class Agent:
   def __init__(self, env, lr, gamma):
     self.env = env
@@ -47,6 +46,7 @@ class Agent:
   def choose_action(self, state):
     with torch.no_grad():
       state = torch.tensor(state, dtype=torch.float).unsqueeze(0)
+      print(state.shape)
       q_values = self.policy_net(state, )
       action = torch.argmax(q_values, dim=0).item()
     return action
@@ -89,6 +89,7 @@ for episode in range(episodes):
   while not done:
     legal_moves = list(env.action_space.board.legal_moves)
     agent.update_action_size(len(legal_moves))
+    env.render()
     action = agent.choose_action(state)
     if len(legal_moves) == 0:
        print('No legal moves')
